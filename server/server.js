@@ -9,6 +9,7 @@ const studentViewCourseRoutes = require("./routes/student-routes/course-routes")
 const studentViewOrderRoutes = require("./routes/student-routes/order-routes");
 const studentCoursesRoutes = require("./routes/student-routes/student-courses-routes");
 
+
 const app = express();
 
 // Lấy PORT từ biến môi trường hoặc dùng mặc định 5000
@@ -73,7 +74,7 @@ app.use("/instructor/course", instructorCourseRoutes);
 app.use("/student/course", studentViewCourseRoutes);
 app.use("/student/order", studentViewOrderRoutes);
 app.use("/student/courses-bought", studentCoursesRoutes);
-app.use("/student/course-progress", studentCourseProgressRoutes);
+// app.use("/student/course-progress", studentCourseProgressRoutes);
 
 // Xử lý lỗi
 app.use((err, req, res, next) => {
