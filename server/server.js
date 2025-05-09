@@ -8,20 +8,34 @@ const instructorCourseRoutes = require("./routes/instructor-routes/course-routes
 const studentViewCourseRoutes = require("./routes/student-routes/course-routes");
 const studentViewOrderRoutes = require("./routes/student-routes/order-routes");
 const studentCoursesRoutes = require("./routes/student-routes/student-courses-routes");
-const studentCourseProgressRoutes = require("./routes/student-routes/course-progress-routes");
 
 const app = express();
 
 // Lấy PORT từ biến môi trường hoặc dùng mặc định 5000
 const PORT = process.env.PORT || 10000;
 const MONGO_URI = process.env.MONGO_URI;
+const DEPLOYED_FRONTEND_URL = process.env.FRONTEND_URL;
+
+if (!MONGO_URI) {
+  console.error("FATAL ERROR: MONGO_URI is not defined in environment variables.");
+  process.exit(1); // Thoát nếu không có URI để tránh lỗi không rõ ràng
+}
+console.log("Attempting to connect to MongoDB with URI:", MONGO_URI ? 'URI_IS_SET' : 'URI_IS_UNDEFINED'); // Log để kiểm tra trên Render
 
 // Cấu hình CORS
 const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:5173",
   "https://breezy-ac6zc1lo1-trans-projects-d9e5e158.vercel.app",
   "https://breezy-eta.vercel.app",
   "https://breezy-mbmqrsyzd-trans-projects-d9e5e158.vercel.app",
 ];
+
+if (DEPLOYED_FRONTEND_URL && !allowedOrigins.includes(DEPLOYED_FRONTEND_URL)) {
+  allowedOrigins.push(DEPLOYED_FRONTEND_URL);
+}
+
+console.log("Allowed CORS Origins for this deployment:", allowedOrigins);
 
 app.use(
   cors({
@@ -29,6 +43,7 @@ app.use(
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
+        console.warn(`CORS: Origin ${origin} was blocked.`);
         callback(new Error("Not allowed by CORS"));
       }
     },
@@ -46,6 +61,10 @@ mongoose
   .connect(MONGO_URI)
   .then(() => console.log("MongoDB is connected"))
   .catch((e) => console.log(e));
+
+app.get('/', (req, res) => {
+  res.send('<h1>Breezy Backend API is running!</h1>');
+});
 
 // Cấu hình các route
 app.use("/auth", authRoutes);
