@@ -1,10 +1,9 @@
 import axios from "axios";
 
 const axiosInstance = axios.create({
-  baseURL: process.env.NODE_ENV === 'production' 
-    ? "https://breezy-backend-ivud.onrender.com"  // URL của backend trên Render
-    : "http://localhost:5000"  // URL trong môi trường local
+  baseURL: import.meta.env.VITE_API_URL
 });
+
 
 
 axiosInstance.interceptors.request.use(

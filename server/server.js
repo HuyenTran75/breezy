@@ -17,16 +17,26 @@ const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI;
 
 // Cấu hình CORS
+const allowedOrigins = [
+  "https://breezy-ac6zc1lo1-trans-projects-d9e5e158.vercel.app",
+  "https://breezy-eta.vercel.app",
+  "https://breezy-mbmqrsyzd-trans-projects-d9e5e158.vercel.app",
+];
+
 app.use(
   cors({
-    origin: [
-      'https://breezy-mbmqrsyzd-trans-projects-d9e5e158.vercel.app', // domain frontend của bạn
-      'http://localhost:5173'  // Nếu bạn đang làm việc với môi trường local
-    ],
-    methods: ["GET", "POST", "DELETE", "PUT"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
   })
 );
+
 
 
 app.use(express.json());
