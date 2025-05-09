@@ -13,7 +13,7 @@ const studentCourseProgressRoutes = require("./routes/student-routes/course-prog
 const app = express();
 
 // Lấy PORT từ biến môi trường hoặc dùng mặc định 5000
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 10000;
 const MONGO_URI = process.env.MONGO_URI;
 
 // Cấu hình CORS
