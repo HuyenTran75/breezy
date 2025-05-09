@@ -19,11 +19,15 @@ const MONGO_URI = process.env.MONGO_URI;
 // Cấu hình CORS
 app.use(
   cors({
-    origin: process.env.CLIENT_URL, // Đảm bảo CLIENT_URL được khai báo trong .env
+    origin: [
+      'https://breezy-mbmqrsyzd-trans-projects-d9e5e158.vercel.app', // domain frontend của bạn
+      'http://localhost:5173'  // Nếu bạn đang làm việc với môi trường local
+    ],
     methods: ["GET", "POST", "DELETE", "PUT"],
     allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
+
 
 app.use(express.json());
 
