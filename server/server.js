@@ -50,6 +50,14 @@ app.use(
     },
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
+    allowedHeaders: [
+        "Content-Type",
+        "Authorization",
+        "Origin", // Thêm Origin để chắc chắn
+        "X-Requested-With",
+        "Accept"
+        // Thêm bất kỳ header nào khác mà bạn thấy trong Access-Control-Request-Headers
+    ],
   })
 );
 
