@@ -23,28 +23,31 @@ if (!MONGO_URI) {
 
 console.log("Attempting to connect to MongoDB with URI:", MONGO_URI ? 'URI_IS_SET' : 'URI_IS_UNDEFINED');
 
+const vercelBase = "https://breezy";
+const vercelProjectId = "trans-projects-d9e5e158.vercel.app";
+
+// Danh sách gốc cố định
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
-  "https://breezy-ac6zc1lo1-trans-projects-d9e5e158.vercel.app",
-  "https://breezy-eta.vercel.app",
-  "https://breezy-mbmqrsyzd-trans-projects-d9e5e158.vercel.app",
-  "https://breezy-bv275qjdp-trans-projects-d9e5e158.vercel.app"
+  "https://breezy-eta.vercel.app"
 ];
 
 if (DEPLOYED_FRONTEND_URL && !allowedOrigins.includes(DEPLOYED_FRONTEND_URL)) {
   allowedOrigins.push(DEPLOYED_FRONTEND_URL);
 }
 
-console.log("Allowed CORS Origins for this deployment:", allowedOrigins);
+const isAllowedVercelOrigin = (origin) => {
+  return origin && origin.startsWith(vercelBase) && origin.endsWith(vercelProjectId);
+};
 
-// ✅ Sửa tại đây để CORS hoạt động ổn định
 app.use(
   cors({
     origin: function (origin, callback) {
       console.log("Incoming request origin:", origin);
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, origin); // Quan trọng: phải trả lại đúng origin thay vì true
+
+      if (!origin || allowedOrigins.includes(origin) || isAllowedVercelOrigin(origin)) {
+        callback(null, origin); // cho phép origin này
       } else {
         console.warn(`CORS BLOCKED: ${origin}`);
         callback(new Error("Not allowed by CORS"));
