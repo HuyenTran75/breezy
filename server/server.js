@@ -30,6 +30,7 @@ const allowedOrigins = [
   "https://breezy-ac6zc1lo1-trans-projects-d9e5e158.vercel.app",
   "https://breezy-eta.vercel.app",
   "https://breezy-mbmqrsyzd-trans-projects-d9e5e158.vercel.app",
+  "https://breezy-bv275qjdp-trans-projects-d9e5e158.vercel.app"
 ];
 
 if (DEPLOYED_FRONTEND_URL && !allowedOrigins.includes(DEPLOYED_FRONTEND_URL)) {
@@ -53,7 +54,7 @@ app.use(
     allowedHeaders: [
         "Content-Type",
         "Authorization",
-        "Origin", // Thêm Origin để chắc chắn
+        "Origin", 
         "X-Requested-With",
         "Accept"
         // Thêm bất kỳ header nào khác mà bạn thấy trong Access-Control-Request-Headers
