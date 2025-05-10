@@ -53,7 +53,7 @@ app.use(
         callback(new Error("Not allowed by CORS"));
       }
     },
-    credentials: true,
+    credentials: true, // Quan trọng để gửi cookie qua CORS
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: [
       "Content-Type",
@@ -62,6 +62,7 @@ app.use(
       "X-Requested-With",
       "Accept"
     ],
+    exposedHeaders: ["set-cookie"], // Để trình duyệt có thể đọc cookies
   })
 );
 
