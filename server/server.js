@@ -30,7 +30,7 @@ const vercelProjectId = "trans-projects-d9e5e158.vercel.app";
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
-  "https://breezy-eta.vercel.app"
+  "https://breezy-wine-chi.vercel.app"
 ];
 
 if (DEPLOYED_FRONTEND_URL && !allowedOrigins.includes(DEPLOYED_FRONTEND_URL)) {
