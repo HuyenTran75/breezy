@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
+
 const authRoutes = require("./routes/auth-routes/index");
 const mediaRoutes = require("./routes/instructor-routes/media-routes");
 const instructorCourseRoutes = require("./routes/instructor-routes/course-routes");
@@ -9,21 +10,19 @@ const studentViewCourseRoutes = require("./routes/student-routes/course-routes")
 const studentViewOrderRoutes = require("./routes/student-routes/order-routes");
 const studentCoursesRoutes = require("./routes/student-routes/student-courses-routes");
 
-
 const app = express();
 
-// Lấy PORT từ biến môi trường hoặc dùng mặc định 5000
 const PORT = process.env.PORT || 10000;
 const MONGO_URI = process.env.MONGO_URI;
 const DEPLOYED_FRONTEND_URL = process.env.FRONTEND_URL;
 
 if (!MONGO_URI) {
   console.error("FATAL ERROR: MONGO_URI is not defined in environment variables.");
-  process.exit(1); // Thoát nếu không có URI để tránh lỗi không rõ ràng
+  process.exit(1);
 }
-console.log("Attempting to connect to MongoDB with URI:", MONGO_URI ? 'URI_IS_SET' : 'URI_IS_UNDEFINED'); // Log để kiểm tra trên Render
 
-// Cấu hình CORS
+console.log("Attempting to connect to MongoDB with URI:", MONGO_URI ? 'URI_IS_SET' : 'URI_IS_UNDEFINED');
+
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
@@ -39,30 +38,29 @@ if (DEPLOYED_FRONTEND_URL && !allowedOrigins.includes(DEPLOYED_FRONTEND_URL)) {
 
 console.log("Allowed CORS Origins for this deployment:", allowedOrigins);
 
+// ✅ Sửa tại đây để CORS hoạt động ổn định
 app.use(
   cors({
-    origin: (origin, callback) => {
+    origin: function (origin, callback) {
+      console.log("Incoming request origin:", origin);
       if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
+        callback(null, origin); // Quan trọng: phải trả lại đúng origin thay vì true
       } else {
-        console.warn(`CORS: Origin ${origin} was blocked.`);
+        console.warn(`CORS BLOCKED: ${origin}`);
         callback(new Error("Not allowed by CORS"));
       }
     },
-    methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: [
-        "Content-Type",
-        "Authorization",
-        "Origin", 
-        "X-Requested-With",
-        "Accept"
-        // Thêm bất kỳ header nào khác mà bạn thấy trong Access-Control-Request-Headers
+      "Content-Type",
+      "Authorization",
+      "Origin",
+      "X-Requested-With",
+      "Accept"
     ],
   })
 );
-
-
 
 app.use(express.json());
 
@@ -72,20 +70,20 @@ mongoose
   .then(() => console.log("MongoDB is connected"))
   .catch((e) => console.log(e));
 
+// Route test
 app.get('/', (req, res) => {
   res.send('<h1>Breezy Backend API is running!</h1>');
 });
 
-// Cấu hình các route
+// Các route thực tế
 app.use("/auth", authRoutes);
 app.use("/media", mediaRoutes);
 app.use("/instructor/course", instructorCourseRoutes);
 app.use("/student/course", studentViewCourseRoutes);
 app.use("/student/order", studentViewOrderRoutes);
 app.use("/student/courses-bought", studentCoursesRoutes);
-// app.use("/student/course-progress", studentCourseProgressRoutes);
 
-// Xử lý lỗi
+// Middleware xử lý lỗi
 app.use((err, req, res, next) => {
   console.log(err.stack);
   res.status(500).json({
@@ -94,7 +92,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Lắng nghe kết nối tại cổng PORT
+// Lắng nghe server
 app.listen(PORT, () => {
   console.log(`Server is now running on port ${PORT}`);
 });
