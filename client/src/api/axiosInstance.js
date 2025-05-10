@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const axiosInstance = axios.create({
-  baseURL: "https://breezy-5cgj.onrender.com", // hoặc lấy từ .env
+  baseURL: "https://khoa-hoc-truc-tuyen.onrender.com", // hoặc lấy từ .env
   withCredentials: true, // <-- Quan trọng để gửi cookie qua CORS
 });
 
