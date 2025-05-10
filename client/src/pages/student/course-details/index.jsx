@@ -29,6 +29,7 @@ function StudentViewCourseDetailsPage() {
     setCurrentCourseDetailsId,
     loadingState,
     setLoadingState,
+    setCoursePurchaseId,
   } = useContext(StudentContext);
 
   const { auth } = useContext(AuthContext);
@@ -41,47 +42,73 @@ function StudentViewCourseDetailsPage() {
   const { id } = useParams();
   const location = useLocation();
 
+  // Hàm lấy chi tiết khóa học
   async function fetchStudentViewCourseDetails() {
-    // const checkCoursePurchaseInfoResponse =
-    //   await checkCoursePurchaseInfoService(
-    //     currentCourseDetailsId,
-    //     auth?.user._id
-    //   );
-
-    // if (
-    //   checkCoursePurchaseInfoResponse?.success &&
-    //   checkCoursePurchaseInfoResponse?.data
-    // ) {
-    //   navigate(`/course-progress/${currentCourseDetailsId}`);
-    //   return;
-    // }
-
-    const response = await fetchStudentViewCourseDetailsService(
-      currentCourseDetailsId
-    );
-
-    if (response?.success) {
-      setStudentViewCourseDetails(response?.data);
+    if (!currentCourseDetailsId) {
+      setStudentViewCourseDetails(null);
       setLoadingState(false);
-    } else {
+      return;
+    }
+
+    // Nếu đã đăng nhập, kiểm tra đã mua khóa học chưa
+    if (auth?.user?._id) {
+      try {
+        const checkCoursePurchaseInfoResponse =
+          await checkCoursePurchaseInfoService(
+            currentCourseDetailsId,
+            auth.user._id
+          );
+
+        if (
+          checkCoursePurchaseInfoResponse?.success &&
+          checkCoursePurchaseInfoResponse?.data
+        ) {
+          navigate(`/course-progress/${currentCourseDetailsId}`);
+          return;
+        }
+      } catch (err) {
+        // Có thể log lỗi hoặc xử lý nếu cần
+        // console.error(err);
+      }
+    }
+
+    // Lấy chi tiết khóa học
+    try {
+      const response = await fetchStudentViewCourseDetailsService(
+        currentCourseDetailsId
+      );
+
+      if (response?.success) {
+        setStudentViewCourseDetails(response?.data);
+        setLoadingState(false);
+      } else {
+        setStudentViewCourseDetails(null);
+        setLoadingState(false);
+      }
+    } catch (err) {
       setStudentViewCourseDetails(null);
       setLoadingState(false);
     }
   }
 
   function handleSetFreePreview(getCurrentVideoInfo) {
-    console.log(getCurrentVideoInfo);
     setDisplayCurrentVideoFreePreview(getCurrentVideoInfo?.videoUrl);
   }
 
   async function handleCreatePayment() {
+    // Đảm bảo có user và course
+    if (!auth?.user?._id || !studentViewCourseDetails?._id) {
+      alert("Vui lòng đăng nhập và chọn khóa học hợp lệ!");
+      return;
+    }
+
     const paymentPayload = {
       userId: auth?.user?._id,
       userName: auth?.user?.userName,
       userEmail: auth?.user?.userEmail,
-      orderStatus: "completed", // => completed luôn vì ko cần thanh toán qua PayPal
-      paymentMethod: "free",    // => hoặc "direct" hay gì đó tùy bạn định nghĩa
-      paymentStatus: "success", // => thanh toán thành công luôn
+      orderStatus: "completed", // completed luôn vì không cần thanh toán qua PayPal
+      paymentMethod: "free",    // hoặc "direct" tùy bạn định nghĩa
+      paymentStatus: "success", // thanh toán thành công luôn
       orderDate: new Date(),
       paymentId: "",            // không cần paymentId
       payerId: "",              // không cần payerId
@@ -91,39 +118,40 @@ function StudentViewCourseDetailsPage() {
       courseTitle: studentViewCourseDetails?.title,
       courseId: studentViewCourseDetails?._id,
     };
-  
-    console.log(paymentPayload, "paymentPayload");
-    
+
     const response = await createPaymentService(paymentPayload);
-  
+
     if (response.success) {
       sessionStorage.setItem(
         "currentOrderId",
         JSON.stringify(response?.data?.orderId)
       );
-      // ✅ Không cần setApprovalUrl nữa
-      // ✅ Chuyển thẳng người dùng tới trang khóa học
-      window.location.href = "/student-courses"; 
+      // Chuyển thẳng người dùng tới trang khóa học
+      window.location.href = "/student-courses";
     }
   }
-  
+
   useEffect(() => {
     if (displayCurrentVideoFreePreview !== null) setShowFreePreviewDialog(true);
   }, [displayCurrentVideoFreePreview]);
 
   useEffect(() => {
     if (currentCourseDetailsId !== null) fetchStudentViewCourseDetails();
+    // eslint-disable-next-line
   }, [currentCourseDetailsId]);
 
   useEffect(() => {
     if (id) setCurrentCourseDetailsId(id);
+    // eslint-disable-next-line
   }, [id]);
 
   useEffect(() => {
-    if (!location.pathname.includes("course/details"))
-      setStudentViewCourseDetails(null),
-        setCurrentCourseDetailsId(null),
-        setCoursePurchaseId(null);
+    if (!location.pathname.includes("course/details")) {
+      setStudentViewCourseDetails(null);
+      setCurrentCourseDetailsId(null);
+      setCoursePurchaseId && setCoursePurchaseId(null);
+    }
+    // eslint-disable-next-line
   }, [location.pathname]);
 
   if (loadingState) return <Skeleton />;
@@ -140,7 +168,7 @@ function StudentViewCourseDetailsPage() {
       : -1;
 
   return (
-    <div className=" mx-auto p-4">
+    <div className="mx-auto p-4">
       <div className="bg-gray-900 text-white p-8 rounded-t-lg">
         <h1 className="text-3xl font-bold mb-4">
           {studentViewCourseDetails?.title}
@@ -148,14 +176,19 @@ function StudentViewCourseDetailsPage() {
         <p className="text-xl mb-4">{studentViewCourseDetails?.subtitle}</p>
         <div className="flex items-center space-x-4 mt-2 text-sm">
           <span>Tạo bởi {studentViewCourseDetails?.instructorName}</span>
-          <span>Ngày tạo {studentViewCourseDetails?.date.split("T")[0]}</span>
+          <span>
+            Ngày tạo{" "}
+            {studentViewCourseDetails?.date
+              ? studentViewCourseDetails?.date.split("T")[0]
+              : ""}
+          </span>
           <span className="flex items-center">
             <Globe className="mr-1 h-4 w-4" />
             {studentViewCourseDetails?.primaryLanguage}
           </span>
           <span>
-            {studentViewCourseDetails?.students.length}{" "}
-            {studentViewCourseDetails?.students.length <= 1
+            {studentViewCourseDetails?.students?.length || 0}{" "}
+            {studentViewCourseDetails?.students?.length <= 1
               ? "Student"
               : "Học viên"}
           </span>
@@ -170,7 +203,7 @@ function StudentViewCourseDetailsPage() {
             <CardContent>
               <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {studentViewCourseDetails?.objectives
-                  .split(",")
+                  ?.split(",")
                   .map((objective, index) => (
                     <li key={index} className="flex items-start">
                       <CheckCircle className="mr-2 h-5 w-5 text-green-500 flex-shrink-0" />
@@ -184,36 +217,41 @@ function StudentViewCourseDetailsPage() {
             <CardHeader>
               <CardTitle>Mô tả khóa học</CardTitle>
             </CardHeader>
-            <CardContent>{studentViewCourseDetails?.description}</CardContent>
+            <CardContent>
+              {studentViewCourseDetails?.description}
+            </CardContent>
           </Card>
           <Card className="mb-8">
             <CardHeader>
               <CardTitle>Nội dung khóa học</CardTitle>
             </CardHeader>
             <CardContent>
-              {studentViewCourseDetails?.curriculum?.map(
-                (curriculumItem, index) => (
-                  <li
-                    className={`${
-                      curriculumItem?.freePreview
-                        ? "cursor-pointer"
-                        : "cursor-not-allowed"
-                    } flex items-center mb-4`}
-                    onClick={
-                      curriculumItem?.freePreview
-                        ? () => handleSetFreePreview(curriculumItem)
-                        : null
-                    }
-                  >
-                    {curriculumItem?.freePreview ? (
-                      <PlayCircle className="mr-2 h-4 w-4" />
-                    ) : (
-                      <Lock className="mr-2 h-4 w-4" />
-                    )}
-                    <span>{curriculumItem?.title}</span>
-                  </li>
-                )
-              )}
+              <ul>
+                {studentViewCourseDetails?.curriculum?.map(
+                  (curriculumItem, index) => (
+                    <li
+                      key={index}
+                      className={`${
+                        curriculumItem?.freePreview
+                          ? "cursor-pointer"
+                          : "cursor-not-allowed"
+                      } flex items-center mb-4`}
+                      onClick={
+                        curriculumItem?.freePreview
+                          ? () => handleSetFreePreview(curriculumItem)
+                          : null
+                      }
+                    >
+                      {curriculumItem?.freePreview ? (
+                        <PlayCircle className="mr-2 h-4 w-4" />
+                      ) : (
+                        <Lock className="mr-2 h-4 w-4" />
+                      )}
+                      <span>{curriculumItem?.title}</span>
+                    </li>
+                  )
+                )}
+              </ul>
             </CardContent>
           </Card>
         </main>
@@ -233,7 +271,7 @@ function StudentViewCourseDetailsPage() {
                   height="200px"
                 />
               </div>
-          
+
               <Button onClick={handleCreatePayment} className="w-full">
                 Bắt đầu ngay!
               </Button>
@@ -262,8 +300,9 @@ function StudentViewCourseDetailsPage() {
           <div className="flex flex-col gap-2">
             {studentViewCourseDetails?.curriculum
               ?.filter((item) => item.freePreview)
-              .map((filteredItem) => (
+              .map((filteredItem, idx) => (
                 <p
+                  key={idx}
                   onClick={() => handleSetFreePreview(filteredItem)}
                   className="cursor-pointer text-[16px] font-medium"
                 >
